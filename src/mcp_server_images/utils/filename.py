@@ -129,8 +129,8 @@ def generate_filename(
     if not base_filename.endswith(f'.{extension}'):
         base_filename = f"{base_filename}.{extension}"
     
-    # Create full path
-    output_path = Path(output_dir) / base_filename
+    # Create full path and resolve to absolute
+    output_path = (Path(output_dir) / base_filename).resolve()
     
     # Handle file conflicts by adding a number
     if output_path.exists():

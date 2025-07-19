@@ -210,7 +210,9 @@ async def generate_image_tool(
 
 **Template Applied:** `{filename_template}`
 
-The image has been saved and is ready for use!"""
+The image has been saved and is ready for use!
+
+**💡 Tip:** Use `open_file(path="{output_path}")` to view the image or `reveal_file(path="{output_path}")` to show it in your file manager."""
 
         return [TextContent(type="text", text=response_text)]
         
