@@ -34,7 +34,11 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "prompt": {
                         "type": "string",
-                        "description": "Text description of the image to generate",
+                        "description": "Detailed text description of the image to generate",
+                    },
+                    "negative_prompt": {
+                        "type": "string",
+                        "description": "Things to avoid in the image (not supported by BFL)",
                     },
                     "provider": {
                         "type": "string",
@@ -44,13 +48,26 @@ async def list_tools() -> list[Tool]:
                     },
                     "model": {
                         "type": "string",
-                        "description": "Specific model to use (provider-specific)",
+                        "description": "Specific model to use (e.g., 'sd3.5-large', 'flux-pro-1.1')",
                     },
                     "aspect_ratio": {
                         "type": "string",
                         "enum": ["16:9", "1:1", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21"],
                         "description": "Image aspect ratio",
                         "default": "1:1",
+                    },
+                    "cfg_scale": {
+                        "type": "number",
+                        "minimum": 1.0,
+                        "maximum": 10.0,
+                        "description": "Classifier free guidance scale (Stability AI only)",
+                        "default": 7.0,
+                    },
+                    "seed": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967294,
+                        "description": "Seed for reproducible generation",
                     },
                     "output_dir": {
                         "type": "string",
@@ -80,65 +97,57 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent | 
 
 async def generate_image_tool(
     prompt: str,
+    negative_prompt: Optional[str] = None,
     provider: str = "stability",
     model: Optional[str] = None,
     aspect_ratio: str = "1:1",
+    cfg_scale: float = 7.0,
+    seed: Optional[int] = None,
     output_dir: str = "./images",
     filename_template: str = "{{.Timestamp}}-{{.Subject}}",
 ) -> list[TextContent]:
-    """Generate an image from a text prompt."""
+    """Generate an image directly from provided parameters - no prompt optimization needed."""
     
-    # TODO: Implement the actual image generation pipeline
-    # This is a placeholder that will be replaced with the real implementation
-    
-    logger.info(f"Generating image with prompt: {prompt}")
+    logger.info(f"Generating image: {prompt[:50]}...")
     logger.info(f"Provider: {provider}, Model: {model}, Aspect: {aspect_ratio}")
     
     # Create output directory
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
-    # For now, return a placeholder response
-    result = {
-        "success": True,
-        "message": "Image generation pipeline ready - implementation in progress",
-        "parameters": {
-            "prompt": prompt,
-            "provider": provider,
-            "model": model or f"default-{provider}-model",
-            "aspect_ratio": aspect_ratio,
-            "output_dir": output_dir,
-            "filename_template": filename_template,
-        },
-        "next_steps": [
-            "1. Port mkimg prompt optimization logic",
-            "2. Implement Stability AI client",
-            "3. Implement BFL client", 
-            "4. Add filename templating",
-            "5. Add comprehensive error handling",
-        ],
-    }
+    # TODO: Implement direct image generation
+    # 1. Apply filename template with timestamp and subject extraction
+    # 2. Call provider API directly (no Claude needed)
+    # 3. Save image with generated filename
+    # 4. Return metadata and file path
     
-    return [
-        TextContent(
-            type="text",
-            text=f"Image generation request processed successfully!\n\n"
-                 f"**Configuration:**\n"
-                 f"- Prompt: {prompt}\n"
-                 f"- Provider: {provider}\n"
-                 f"- Model: {model or 'default'}\n"
-                 f"- Aspect Ratio: {aspect_ratio}\n"
-                 f"- Output: {output_dir}\n"
-                 f"- Template: {filename_template}\n\n"
-                 f"**Status:** Ready for implementation\n\n"
-                 f"The MCP server infrastructure is in place. Next steps:\n"
-                 f"1. Port mkimg prompt optimization logic\n"
-                 f"2. Implement provider clients (Stability AI, BFL)\n"
-                 f"3. Add filename templating system\n"
-                 f"4. Add comprehensive error handling and metadata tracking\n\n"
-                 f"This will enable AI models to generate images during conversations!"
-        )
-    ]
+    # For now, return a placeholder that shows the simplified design
+    result_text = f"""Image generation request received!
+
+**Direct Generation (No Dual Pipes):**
+- Prompt: {prompt}
+- Negative: {negative_prompt or 'None'}
+- Provider: {provider}
+- Model: {model or f'default-{provider}'}
+- Aspect: {aspect_ratio}
+- CFG Scale: {cfg_scale}
+- Seed: {seed or 'random'}
+
+**Simplified Design:**
+✅ LLM provides optimized prompt directly
+✅ MCP server handles image generation only
+✅ No secondary Claude API call needed
+✅ Filename templating: {filename_template}
+
+**Next Steps:**
+1. Implement direct provider clients (Stability AI, BFL)
+2. Add filename templating with timestamp patterns
+3. Save images and return metadata
+4. Error handling and validation
+
+This design is much cleaner - the calling LLM does the prompt optimization!"""
+    
+    return [TextContent(type="text", text=result_text)]
 
 
 async def main():

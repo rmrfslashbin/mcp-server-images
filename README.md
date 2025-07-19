@@ -5,7 +5,7 @@ A Model Context Protocol (MCP) server for AI-powered image generation using Stab
 ## Features
 
 - **Multi-provider support**: Stability AI (Stable Diffusion) and Black Forest Labs (Flux models)
-- **AI-optimized prompts**: Uses Claude to analyze and optimize user prompts for better image generation
+- **Direct generation**: Accepts optimized prompts directly from calling LLM (no dual pipes)
 - **Flexible filename templates**: Customizable output filenames with timestamp, provider, model, and content-based variables
 - **Comprehensive metadata**: Full tracking of generation parameters, checksums, and provenance
 - **Professional error handling**: Detailed error reporting and retry mechanisms
@@ -26,12 +26,11 @@ uv sync
 
 ### Configuration
 
-Create a `.env` file or configure via environment variables:
+Configure via environment variables:
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...
-STABILITY_API_KEY=sk-...
-BFL_API_KEY=...
+STABILITY_API_KEY=sk-...     # Required for Stability AI
+BFL_API_KEY=...              # Required for Black Forest Labs
 ```
 
 ### Usage with MCP Client
@@ -51,10 +50,13 @@ python -m mcp_server_images
 Generate images from text prompts with AI-optimized prompting.
 
 **Parameters:**
-- `prompt` (required): Text description of the image to generate
+- `prompt` (required): Detailed, optimized text description of the image to generate
+- `negative_prompt` (optional): Things to avoid in the image (Stability AI only)
 - `provider` (optional): "stability" or "bfl" (default: "stability")
-- `model` (optional): Specific model to use (default: provider-specific default)
+- `model` (optional): Specific model to use (e.g., "sd3.5-large", "flux-pro-1.1")
 - `aspect_ratio` (optional): Image aspect ratio (default: "1:1")
+- `cfg_scale` (optional): Classifier free guidance scale 1.0-10.0 (Stability AI only)
+- `seed` (optional): Seed for reproducible generation
 - `output_dir` (optional): Output directory (default: "./images")
 - `filename_template` (optional): Template for generated filenames
 
@@ -63,10 +65,12 @@ Generate images from text prompts with AI-optimized prompting.
 {
   "name": "generate_image",
   "arguments": {
-    "prompt": "A serene mountain landscape at sunset with a lake reflection",
+    "prompt": "A majestic mountain landscape at golden hour, with a pristine lake reflecting the warm sunset colors, ancient pine trees framing the composition, volumetric lighting through misty atmosphere, highly detailed digital painting style",
+    "negative_prompt": "blurry, low quality, oversaturated, distorted, artificial",
     "provider": "stability",
     "model": "sd3.5-large",
     "aspect_ratio": "16:9",
+    "cfg_scale": 7.5,
     "filename_template": "{{.Timestamp}}-{{.Provider}}-{{.Subject}}"
   }
 }
@@ -115,7 +119,6 @@ mcp:
       command: "uv"
       args: ["run", "mcp-server-images"]
       env:
-        ANTHROPIC_API_KEY: "sk-ant-..."
         STABILITY_API_KEY: "sk-..."
         BFL_API_KEY: "..."
       config:
