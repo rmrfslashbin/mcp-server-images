@@ -1,10 +1,10 @@
 # MCP Server - Images
 
-A Model Context Protocol (MCP) server for AI-powered image generation using Stability AI and Black Forest Labs APIs.
+A Model Context Protocol (MCP) server for AI-powered image generation using Stability AI, Black Forest Labs, and ModelsLab APIs.
 
 ## Features
 
-- **Multi-provider support**: Stability AI (Stable Diffusion) and Black Forest Labs (Flux models)
+- **Multi-provider support**: Stability AI (Stable Diffusion), Black Forest Labs (Flux models), and ModelsLab (Flux)
 - **Direct generation**: Accepts optimized prompts directly from calling LLM (no dual pipes)
 - **Flexible filename templates**: Customizable output filenames with timestamp, provider, model, and content-based variables
 - **Comprehensive metadata**: Full tracking of generation parameters, checksums, and provenance
@@ -31,6 +31,7 @@ Configure via environment variables:
 ```bash
 STABILITY_API_KEY=sk-...     # Required for Stability AI
 BFL_API_KEY=...              # Required for Black Forest Labs
+MODELSLAB_API_KEY=...        # Required for ModelsLab
 ```
 
 ### Usage with MCP Client
@@ -51,11 +52,11 @@ Generate images from text prompts with AI-optimized prompting.
 
 **Parameters:**
 - `prompt` (required): Detailed, optimized text description of the image to generate
-- `negative_prompt` (optional): Things to avoid in the image (Stability AI only)
-- `provider` (optional): "stability" or "bfl" (default: "stability")
+- `negative_prompt` (optional): Things to avoid in the image (Stability AI and ModelsLab)
+- `provider` (optional): "stability", "bfl", or "modelslab" (default: "stability")
 - `model` (optional): Specific model to use (e.g., "sd3.5-large", "flux-pro-1.1")
 - `aspect_ratio` (optional): Image aspect ratio (default: "1:1")
-- `cfg_scale` (optional): Classifier free guidance scale 1.0-10.0 (Stability AI only)
+- `cfg_scale` (optional): Classifier free guidance scale 1.0-10.0 (Stability AI and ModelsLab)
 - `seed` (optional): Seed for reproducible generation
 - `output_dir` (optional): Output directory (default: "./images")
 - `filename_template` (optional): Template for generated filenames
@@ -106,6 +107,11 @@ Customize output filenames using template variables:
 - **Features**: High-quality generation, fast turnaround
 - **API**: BFL REST API v1
 
+### ModelsLab
+- **Models**: flux
+- **Features**: Negative prompts, CFG scale control, seed support, multiple aspect ratios
+- **API**: ModelsLab Image Generation API v6
+
 ## Integration
 
 ### With Chatterbox
@@ -121,6 +127,7 @@ mcp:
       env:
         STABILITY_API_KEY: "sk-..."
         BFL_API_KEY: "..."
+        MODELSLAB_API_KEY: "..."
       config:
         output_dir: "./images"
         filename_template: "{{.Timestamp}}-{{.Provider}}-{{.Subject}}"

@@ -15,7 +15,7 @@ from mcp.types import (
 )
 import mcp.server.stdio
 
-from .providers import StabilityClient, BFLClient
+from .providers import StabilityClient, BFLClient, ModelsLabClient
 from .utils import generate_filename
 
 # Configure logging
@@ -46,13 +46,13 @@ async def list_tools() -> list[Tool]:
                     },
                     "provider": {
                         "type": "string",
-                        "enum": ["stability", "bfl"],
+                        "enum": ["stability", "bfl", "modelslab"],
                         "description": "Image generation provider",
                         "default": "stability",
                     },
                     "model": {
                         "type": "string",
-                        "description": "Specific model to use (e.g., 'sd3.5-large', 'flux-pro-1.1')",
+                        "description": "Specific model to use (e.g., 'sd3.5-large', 'flux-pro-1.1', 'flux')",
                     },
                     "aspect_ratio": {
                         "type": "string",
@@ -117,8 +117,8 @@ async def generate_image_tool(
     
     try:
         # Validate provider
-        if provider not in ["stability", "bfl"]:
-            raise ValueError(f"Unsupported provider: {provider}. Use 'stability' or 'bfl'")
+        if provider not in ["stability", "bfl", "modelslab"]:
+            raise ValueError(f"Unsupported provider: {provider}. Use 'stability', 'bfl', or 'modelslab'")
         
         # Get API keys from environment
         if provider == "stability":
@@ -126,11 +126,16 @@ async def generate_image_tool(
             if not api_key:
                 raise ValueError("STABILITY_API_KEY environment variable not set")
             default_model = "sd3.5-large"
-        else:  # bfl
+        elif provider == "bfl":
             api_key = os.getenv("BFL_API_KEY")
             if not api_key:
                 raise ValueError("BFL_API_KEY environment variable not set")
             default_model = "flux-pro-1.1"
+        else:  # modelslab
+            api_key = os.getenv("MODELSLAB_API_KEY")
+            if not api_key:
+                raise ValueError("MODELSLAB_API_KEY environment variable not set")
+            default_model = "flux"
         
         # Use default model if not specified
         if not model:
@@ -165,7 +170,7 @@ async def generate_image_tool(
             finally:
                 await client.close()
                 
-        else:  # bfl
+        elif provider == "bfl":
             client = BFLClient(api_key)
             try:
                 result = await client.generate_image(
@@ -175,6 +180,21 @@ async def generate_image_tool(
                     aspect_ratio=aspect_ratio,
                     cfg_scale=cfg_scale,  # Will be ignored by BFL
                     seed=seed,  # Will be ignored by BFL
+                    output_path=output_path
+                )
+            finally:
+                await client.close()
+
+        else:  # modelslab
+            client = ModelsLabClient(api_key)
+            try:
+                result = await client.generate_image(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    model=model,
+                    aspect_ratio=aspect_ratio,
+                    cfg_scale=cfg_scale,
+                    seed=seed,
                     output_path=output_path
                 )
             finally:
@@ -196,14 +216,14 @@ async def generate_image_tool(
 - **Model:** {result['model']}
 - **Prompt:** {prompt}"""
 
-        if negative_prompt and provider == "stability":
+        if negative_prompt and provider in ["stability", "modelslab"]:
             response_text += f"\n- **Negative prompt:** {negative_prompt}"
         
         response_text += f"""
 - **Aspect ratio:** {aspect_ratio}
 - **Seed:** {actual_seed}"""
 
-        if provider == "stability":
+        if provider in ["stability", "modelslab"]:
             response_text += f"\n- **CFG scale:** {cfg_scale}"
 
         response_text += f"""
